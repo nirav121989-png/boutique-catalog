@@ -27,10 +27,21 @@ export default function InquiryDrawer({ isOpen, onClose, selectedItems, onUpdate
   // Configured WhatsApp Business line passed from settings
   const WHATSAPP_BUSINESS_NUMBER = whatsappNumber || '919876543210';
 
-  // Calculate totals
+  // Calculate totals and quantity discounts
   const estimatedTotal = selectedItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
   const totalWeightGram = selectedItems.reduce((acc, item) => acc + ((item.weight_grams || 500) * item.quantity), 0);
-  const grandTotal = estimatedTotal + shippingCharge;
+  
+  const totalQuantity = selectedItems.reduce((acc, item) => acc + item.quantity, 0);
+  let discountPercentage = 0;
+  if (totalQuantity >= 3) {
+    discountPercentage = 10;
+  } else if (totalQuantity === 2) {
+    discountPercentage = 5;
+  }
+  
+  const discountAmount = Math.round((estimatedTotal * discountPercentage) / 100);
+  const discountedSubtotal = estimatedTotal - discountAmount;
+  const grandTotal = discountedSubtotal + shippingCharge;
 
   // Reset step when closed
   useEffect(() => {
@@ -98,7 +109,7 @@ export default function InquiryDrawer({ isOpen, onClose, selectedItems, onUpdate
         billing_state: stateName.trim(),
         billing_email: email.trim() || 'customer@example.com',
         billing_phone: phone.trim(),
-        sub_total: estimatedTotal,
+        sub_total: discountedSubtotal,
         shipping_charges: shippingCharge,
         weight: totalWeightGram || 500,
         order_items: selectedItems.map(item => ({
@@ -132,6 +143,9 @@ export default function InquiryDrawer({ isOpen, onClose, selectedItems, onUpdate
       });
 
       text += `\n📦 *Shipping Charge:* ₹${shippingCharge.toLocaleString('en-IN')}\n`;
+      if (discountAmount > 0) {
+        text += `🎉 *Bulk Discount (${discountPercentage}% OFF):* -₹${discountAmount.toLocaleString('en-IN')}\n`;
+      }
       text += `💵 *Grand Total:* ₹${grandTotal.toLocaleString('en-IN')}\n`;
       
       if (message.trim()) {
@@ -343,11 +357,19 @@ export default function InquiryDrawer({ isOpen, onClose, selectedItems, onUpdate
             {/* Footer containing pricing total and submit */}
             {selectedItems.length > 0 && step !== 3 && (
               <div style={{ padding: '24px', borderTop: '1px solid rgba(212, 175, 55, 0.1)', background: 'rgba(5, 5, 5, 0.8)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                  <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>{step === 1 ? 'Subtotal:' : 'Grand Total:'}</span>
-                  <span style={{ fontSize: '1.4rem', color: 'var(--color-text-gold)', fontWeight: 700, fontFamily: 'var(--font-body)' }}>
-                    ₹{step === 1 ? estimatedTotal.toLocaleString('en-IN') : grandTotal.toLocaleString('en-IN')}
-                  </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {discountAmount > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', color: '#4ade80' }}>
+                      <span>Bulk Discount ({discountPercentage}% OFF):</span>
+                      <span>-₹{discountAmount.toLocaleString('en-IN')}</span>
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>{step === 1 ? 'Subtotal:' : 'Grand Total:'}</span>
+                    <span style={{ fontSize: '1.4rem', color: 'var(--color-text-gold)', fontWeight: 700, fontFamily: 'var(--font-body)' }}>
+                      ₹{step === 1 ? discountedSubtotal.toLocaleString('en-IN') : grandTotal.toLocaleString('en-IN')}
+                    </span>
+                  </div>
                 </div>
 
                 {step === 1 ? (

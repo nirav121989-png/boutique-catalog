@@ -105,6 +105,57 @@ export default function ProductCard({ product, selectedItems, onToggleSelect, se
         <Heart size={16} fill={isWishlisted ? '#ef4444' : 'none'} />
       </button>
 
+      {/* Share Button (Top Right, below Wishlist) */}
+      <button
+        onClick={async (e) => {
+          e.stopPropagation();
+          const url = `${window.location.origin}${window.location.pathname}#/product/${id}`;
+          if (navigator.share) {
+            try {
+              await navigator.share({
+                title,
+                text: `Check out this gorgeous piece from Alankara Jewels!`,
+                url
+              });
+              return;
+            } catch (err) {}
+          }
+          try {
+            await navigator.clipboard.writeText(url);
+            setCopySuccess(true);
+            setTimeout(() => setCopySuccess(false), 2000);
+          } catch (err) {}
+        }}
+        style={{
+          position: 'absolute',
+          top: '52px',
+          right: '12px',
+          zIndex: 10,
+          background: 'rgba(15,15,15,0.6)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          backdropFilter: 'blur(4px)',
+          borderRadius: '50%',
+          width: '32px',
+          height: '32px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          color: copySuccess ? '#4ade80' : 'rgba(255,255,255,0.8)',
+          transition: 'all 0.2s ease'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'scale(1.1)';
+          e.currentTarget.style.background = 'rgba(15,15,15,0.8)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'scale(1)';
+          e.currentTarget.style.background = 'rgba(15,15,15,0.6)';
+        }}
+      >
+        {copySuccess ? <Check size={14} /> : <Share2 size={14} />}
+      </button>
+
       {/* Badges Overlay */}
       <div style={{
         position: 'absolute',

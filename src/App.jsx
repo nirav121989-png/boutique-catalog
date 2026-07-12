@@ -7,6 +7,7 @@ import Catalog from './components/Catalog';
 import AdminPanel from './components/AdminPanel';
 import InquiryDrawer from './components/InquiryDrawer';
 import ProductCard from './components/ProductCard';
+import ProductDetail from './components/ProductDetail';
 
 export default function App() {
   // Restore cart from localStorage on first load (cart persistence across page refreshes)
@@ -184,7 +185,9 @@ export default function App() {
   const queryParams = new URLSearchParams(currentHash.split('?')[1] || '');
   const isAdminView = hashBase === '#/admin';
   const isCatalogView = hashBase === '#/catalog';
-  const isHomeView = !isAdminView && !isCatalogView;
+  const isProductView = hashBase.startsWith('#/product/');
+  const productViewId = isProductView ? hashBase.split('#/product/')[1] : null;
+  const isHomeView = !isAdminView && !isCatalogView && !isProductView;
   const initialCategory = queryParams.get('category') || 'All';
 
   // Calculate items quantity count in shopping bag
@@ -459,6 +462,27 @@ export default function App() {
                 selectedItems={selectedItems} 
                 onToggleSelect={handleToggleSelect} 
                 initialCategory={initialCategory}
+                wishlistItems={wishlistItems}
+                onToggleWishlist={handleToggleWishlist}
+                onProductView={handleRecordView}
+              />
+            </motion.div>
+          )}
+
+          {isProductView && productViewId && (
+            <motion.div
+              key="product-view"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              <ProductDetail
+                productId={productViewId}
+                allProducts={products}
+                selectedItems={selectedItems}
+                onToggleSelect={handleToggleSelect}
+                settings={settings}
                 wishlistItems={wishlistItems}
                 onToggleWishlist={handleToggleWishlist}
                 onProductView={handleRecordView}
