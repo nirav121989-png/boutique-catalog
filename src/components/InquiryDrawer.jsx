@@ -127,41 +127,13 @@ export default function InquiryDrawer({ isOpen, onClose, selectedItems, onUpdate
       });
       
       const orderData = await res.json();
-      const uniqueOrderId = orderData.success ? orderData.order_id : `MANUAL-${Date.now().toString().slice(-6)}`;
-
-      // 2. Build the WhatsApp Handoff Message
-      let text = `✨ *Alankara Jewels - Order Placed* ✨\n`;
-      text += `------------------------------------\n`;
-      text += `🆔 *Order ID:* #${uniqueOrderId}\n\n`;
-      text += `👤 *Customer Details:*\nName: ${name.trim()}\nPhone: ${phone.trim()}\n`;
-      text += `📍 *Delivery Address:*\n${address.trim()}, ${city.trim()}, ${stateName.trim()} - ${pincode}\n\n`;
       
-      text += `🛍️ *Order Items:* \n`;
-      selectedItems.forEach((item) => {
-        text += `• ${item.quantity}x ${item.title} (Ref: ${item.sku})\n`;
-        if (item.offer_type && item.offer_type !== 'none') {
-          text += `   🎁 Offer Applied: ${item.offer_tag}\n`;
-        }
-        text += `   - ₹${(item.price * item.quantity).toLocaleString('en-IN')}\n`;
-      });
-
-      text += `\n📦 *Shipping Charge:* ₹${shippingCharge.toLocaleString('en-IN')}\n`;
-      if (discountAmount > 0) {
-        text += `🎉 *Bulk Discount (${discountPercentage}% OFF):* -₹${discountAmount.toLocaleString('en-IN')}\n`;
+      if (orderData.success) {
+        setCreatedOrderId(orderData.order_id);
+        setStep(3); // Move to Success Screen
+      } else {
+        alert(orderData.error || "Failed to create order in Shiprocket. Please check your details.");
       }
-      text += `💵 *Grand Total:* ₹${grandTotal.toLocaleString('en-IN')}\n`;
-      
-      if (message.trim()) {
-        text += `------------------------------------\n`;
-        text += `💬 *Note:* "${message.trim()}"\n`;
-      }
-      
-      text += `\nI would like to complete my payment. Please share the payment link!`;
-
-      // 3. Open WhatsApp Web or App
-      const encodedText = encodeURIComponent(text);
-      const whatsappUrl = `https://api.whatsapp.com/send?phone=${WHATSAPP_BUSINESS_NUMBER}&text=${encodedText}`;
-      window.open(whatsappUrl, '_blank');
       
     } catch (err) {
       alert("Failed to process order. Please try again.");

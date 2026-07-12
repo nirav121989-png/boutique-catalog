@@ -272,7 +272,6 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
     setIsQuickImageModalOpen(false);
     setQuickImageProduct(null);
     setQuickImagesList([]);
-    alert("Images updated successfully!");
   };
 
   // Save product (Add or Edit)
