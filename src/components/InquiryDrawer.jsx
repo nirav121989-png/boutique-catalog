@@ -79,7 +79,7 @@ export default function InquiryDrawer({ isOpen, onClose, selectedItems, onUpdate
     }
   };
 
-  const handlePayNow = async (e) => {
+  const handlePlaceOrder = async (e) => {
     e.preventDefault();
     if (!name.trim() || !phone.trim() || !address.trim() || !city.trim() || !stateName.trim() || pincode.length !== 6) {
       alert('Please fill out all required shipping fields correctly.');
@@ -89,94 +89,65 @@ export default function InquiryDrawer({ isOpen, onClose, selectedItems, onUpdate
     setIsCreatingOrder(true);
 
     try {
-      // 1. Create Razorpay Order
-      const rzpRes = await fetch('/api/createRazorpayOrder', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: grandTotal })
-      });
-      const rzpData = await rzpRes.json();
-
-      if (!rzpData.success) {
-        throw new Error('Failed to initialize payment gateway.');
-      }
-
-      // 2. Open Razorpay Checkout
-      const options = {
-        key: rzpData.key_id,
-        amount: rzpData.order.amount,
-        currency: "INR",
-        name: "Alankara Jewels",
-        description: "Premium Handcrafted Jewelry",
-        order_id: rzpData.order.id,
-        handler: async function (response) {
-          try {
-            // 3. Verify Payment
-            const verifyRes = await fetch('/api/verifyPayment', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature
-              })
-            });
-            const verifyData = await verifyRes.json();
-
-            if (!verifyData.success) throw new Error('Payment verification failed');
-
-            // 4. Payment Verified! Push to Shiprocket
-            const orderPayload = {
-              billing_customer_name: name.trim(),
-              billing_address: address.trim(),
-              billing_city: city.trim(),
-              billing_pincode: pincode.trim(),
-              billing_state: stateName.trim(),
-              billing_email: email.trim() || 'customer@example.com',
-              billing_phone: phone.trim(),
-              sub_total: estimatedTotal,
-              shipping_charges: shippingCharge,
-              weight: totalWeightGram || 500,
-              order_items: selectedItems.map(item => ({
-                name: item.title,
-                sku: item.sku,
-                quantity: item.quantity,
-                price: item.price
-              }))
-            };
-
-            const shipRes = await fetch('/api/createOrder', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(orderPayload)
-            });
-            
-            const shipData = await shipRes.json();
-            
-            // 5. Show Success Screen
-            setCreatedOrderId(shipData.success ? shipData.order_id : response.razorpay_payment_id);
-            setStep(3);
-
-          } catch (err) {
-            console.error(err);
-            alert("Payment succeeded but order creation failed. Please contact support.");
-          }
-        },
-        prefill: {
-          name: name.trim(),
-          email: email.trim() || 'customer@example.com',
-          contact: phone.trim()
-        },
-        theme: {
-          color: "#D4AF37"
-        }
+      // 1. Create order in Shiprocket via Vercel Backend
+      const orderPayload = {
+        billing_customer_name: name.trim(),
+        billing_address: address.trim(),
+        billing_city: city.trim(),
+        billing_pincode: pincode.trim(),
+        billing_state: stateName.trim(),
+        billing_email: email.trim() || 'customer@example.com',
+        billing_phone: phone.trim(),
+        sub_total: estimatedTotal,
+        shipping_charges: shippingCharge,
+        weight: totalWeightGram || 500,
+        order_items: selectedItems.map(item => ({
+          name: item.title,
+          sku: item.sku,
+          quantity: item.quantity,
+          price: item.price
+        }))
       };
 
-      const rzp = new window.Razorpay(options);
-      rzp.open();
+      const res = await fetch('/api/createOrder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderPayload)
+      });
+      
+      const orderData = await res.json();
+      const uniqueOrderId = orderData.success ? orderData.order_id : `MANUAL-${Date.now().toString().slice(-6)}`;
 
+      // 2. Build the WhatsApp Handoff Message
+      let text = `✨ *Alankara Jewels - Order Placed* ✨\n`;
+      text += `------------------------------------\n`;
+      text += `🆔 *Order ID:* #${uniqueOrderId}\n\n`;
+      text += `👤 *Customer Details:*\nName: ${name.trim()}\nPhone: ${phone.trim()}\n`;
+      text += `📍 *Delivery Address:*\n${address.trim()}, ${city.trim()}, ${stateName.trim()} - ${pincode}\n\n`;
+      
+      text += `🛍️ *Order Items:* \n`;
+      selectedItems.forEach((item) => {
+        text += `• ${item.quantity}x ${item.title} (Ref: ${item.sku})\n`;
+        text += `   - ₹${(item.price * item.quantity).toLocaleString('en-IN')}\n`;
+      });
+
+      text += `\n📦 *Shipping Charge:* ₹${shippingCharge.toLocaleString('en-IN')}\n`;
+      text += `💵 *Grand Total:* ₹${grandTotal.toLocaleString('en-IN')}\n`;
+      
+      if (message.trim()) {
+        text += `------------------------------------\n`;
+        text += `💬 *Note:* "${message.trim()}"\n`;
+      }
+      
+      text += `\nI would like to complete my payment. Please share the payment link!`;
+
+      // 3. Open WhatsApp Web or App
+      const encodedText = encodeURIComponent(text);
+      const whatsappUrl = `https://api.whatsapp.com/send?phone=${WHATSAPP_BUSINESS_NUMBER}&text=${encodedText}`;
+      window.open(whatsappUrl, '_blank');
+      
     } catch (err) {
-      alert("Failed to process payment. Please try again.");
+      alert("Failed to process order. Please try again.");
       console.error(err);
     } finally {
       setIsCreatingOrder(false);
@@ -385,7 +356,7 @@ export default function InquiryDrawer({ isOpen, onClose, selectedItems, onUpdate
                   </button>
                 ) : (
                   <button
-                    onClick={handlePayNow}
+                    onClick={handlePlaceOrder}
                     disabled={isCreatingOrder || isFetchingRates || pincode.length !== 6}
                     className="btn-gold"
                     style={{
@@ -400,7 +371,7 @@ export default function InquiryDrawer({ isOpen, onClose, selectedItems, onUpdate
                       cursor: (isCreatingOrder || isFetchingRates || pincode.length !== 6) ? 'not-allowed' : 'pointer'
                     }}
                   >
-                    {isCreatingOrder ? 'Initializing Payment...' : <><CheckCircle size={16} /> Pay ₹{grandTotal.toLocaleString('en-IN')} Now</>}
+                    {isCreatingOrder ? 'Processing...' : <><CheckCircle size={16} /> Place Order Securely</>}
                   </button>
                 )}
               </div>
