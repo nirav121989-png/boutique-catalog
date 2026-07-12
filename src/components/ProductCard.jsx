@@ -13,8 +13,10 @@ export default function ProductCard({ product, selectedItems, onToggleSelect, se
   const [pincode, setPincode] = useState('');
   const [pincodeStatus, setPincodeStatus] = useState(null);
 
-  // Resolve multiple images list, fallback to image_url if empty
-  const productImages = images && images.length > 0 ? images : [image_url];
+  // Resolve multiple images list, fallback to placeholder if empty
+  const defaultPlaceholder = 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&auto=format&fit=crop&q=80';
+  let productImages = images && images.length > 0 ? images : (image_url ? [image_url] : []);
+  if (productImages.length === 0) productImages = [defaultPlaceholder];
   const [currentImgIndex, setCurrentImgIndex] = useState(0);
 
   // Reset image index if product properties change

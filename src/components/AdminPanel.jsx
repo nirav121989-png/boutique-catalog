@@ -232,10 +232,7 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
       finalImages.push(formImageUrlInput.trim());
     }
 
-    if (finalImages.length === 0) {
-      // Fallback placeholder image
-      finalImages.push('https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&auto=format&fit=crop&q=80');
-    }
+
 
     const payload = {
       title: formTitle.trim(),
@@ -807,7 +804,7 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
                   }}>
                     <th style={{ padding: '16px 24px' }}>Item Details</th>
                     <th style={{ padding: '16px 24px' }}>Category</th>
-                    <th style={{ padding: '16px 24px' }}>Plating / Type</th>
+
                     <th style={{ padding: '16px 24px' }}>Retail Price</th>
                     <th style={{ padding: '16px 24px' }}>Status</th>
                     <th style={{ padding: '16px 24px', textAlign: 'right' }}>Actions</th>
@@ -872,20 +869,6 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
                         {/* Category */}
                         <td style={{ padding: '16px 24px', color: 'var(--color-text-muted)' }}>
                           {product.category}
-                        </td>
-
-                        {/* Purity / Plating */}
-                        <td style={{ padding: '16px 24px' }}>
-                          <span style={{
-                            background: 'rgba(212,175,55,0.08)',
-                            color: 'var(--color-gold-champagne)',
-                            padding: '2px 8px',
-                            borderRadius: '4px',
-                            fontSize: '0.75rem',
-                            fontWeight: 600
-                          }}>
-                            {product.purity || 'Premium Imitation'}
-                          </span>
                         </td>
 
                         {/* Pricing */}
@@ -981,7 +964,7 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
 
                   {products.length === 0 && (
                     <tr>
-                      <td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: 'var(--color-text-muted)' }}>
+                      <td colSpan={5} style={{ textAlign: 'center', padding: '40px', color: 'var(--color-text-muted)' }}>
                         Empty Vault: Click "Add Masterpiece" to build catalog selections.
                       </td>
                     </tr>
