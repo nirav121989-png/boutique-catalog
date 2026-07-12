@@ -235,67 +235,7 @@ export default function Catalog({ products, settings, selectedItems, onToggleSel
           </div>
         </div>
 
-        {/* Row 2.5: Subcategory Chips (Dynamic) */}
-        {selectedCategory !== 'All' && (() => {
-          const catObj = (settings?.categories || []).find(c => c.name === selectedCategory);
-          const subList = catObj?.subcategories || [];
-          if (subList.length === 0) return null;
-          
-          return (
-            <div style={{
-              marginTop: '6px',
-              padding: '12px 16px',
-              background: 'rgba(212, 175, 55, 0.02)',
-              border: '1px solid rgba(212, 175, 55, 0.05)',
-              borderRadius: '6px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '8px'
-            }}>
-              <p style={{
-                fontSize: '0.7rem',
-                color: 'var(--color-text-muted)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.15em',
-                margin: 0
-              }}>
-                Style Tiers ({selectedCategory})
-              </p>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                {['All', ...subList.map(s => s.name)].map((sub) => {
-                  const isActive = selectedSubcategory === sub;
-                  return (
-                    <button
-                      key={sub}
-                      onClick={() => setSelectedSubcategory(sub)}
-                      style={{
-                        padding: '4px 12px',
-                        borderRadius: '12px',
-                        fontSize: '0.75rem',
-                        fontFamily: 'var(--font-body)',
-                        cursor: 'pointer',
-                        transition: 'var(--transition-fast)',
-                        border: isActive 
-                          ? '1px solid var(--color-gold-metallic)' 
-                          : '1px solid rgba(255,255,255,0.06)',
-                        background: isActive 
-                          ? 'rgba(212,175,55,0.1)' 
-                          : 'rgba(255,255,255,0.01)',
-                        color: isActive 
-                          ? 'var(--color-gold-champagne)' 
-                          : 'var(--color-text-muted)'
-                      }}
-                    >
-                      {sub}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })()}
-
-        {/* Row 3: Purities, Collection Style and Offers Toggles */}
+        {/* Row 3: Collection Style and Offers Toggles */}
         <div style={{
           display: 'flex',
           flexDirection: 'column',
@@ -310,43 +250,7 @@ export default function Catalog({ products, settings, selectedItems, onToggleSel
             flexWrap: 'wrap',
             gap: '20px'
           }}>
-            {/* Plating style selector chips */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Plating:
-              </span>
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                {purities.map((pur) => {
-                  const isActive = selectedPurity === pur;
-                  return (
-                    <button
-                      key={pur}
-                      onClick={() => setSelectedPurity(pur)}
-                      style={{
-                        padding: '4px 10px',
-                        borderRadius: '4px',
-                        fontSize: '0.75rem',
-                        fontFamily: 'var(--font-body)',
-                        fontWeight: 500,
-                        cursor: 'pointer',
-                        transition: 'var(--transition-fast)',
-                        border: isActive 
-                          ? '1px solid var(--color-gold-metallic)' 
-                          : '1px solid var(--color-gold-border)',
-                        background: isActive 
-                          ? 'rgba(212, 175, 55, 0.15)' 
-                          : 'transparent',
-                        color: isActive 
-                          ? 'var(--color-gold-champagne)' 
-                          : 'var(--color-text-muted)'
-                      }}
-                    >
-                      {pur}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+
 
             {/* Collection Line selector chips */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
