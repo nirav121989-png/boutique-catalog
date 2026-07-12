@@ -824,7 +824,7 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
                         {/* Details Thumbnail */}
                         <td style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
                           <img 
-                            src={product.image_url} 
+                            src={product.image_url || settings?.logo_image_url || 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&auto=format&fit=crop&q=80'} 
                             alt={product.title} 
                             style={{
                               width: '48px',
@@ -1577,7 +1577,7 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
                       />
                     </td>
                     <td style={{ padding: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <img src={p.image_url} alt="" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
+                      <img src={p.image_url || settings?.logo_image_url || 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&auto=format&fit=crop&q=80'} alt="" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
                       <div>
                         <div style={{ fontSize: '0.9rem', color: 'var(--color-gold-champagne)' }}>{p.title}</div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{p.sku}</div>

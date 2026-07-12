@@ -104,7 +104,7 @@ export default function ProductDetail({
   // ----------------------------------------------------
   // PRODUCT FOUND VIEW
   // ----------------------------------------------------
-  const defaultPlaceholder = 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&auto=format&fit=crop&q=80';
+  const defaultPlaceholder = settings?.logo_image_url || 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&auto=format&fit=crop&q=80';
   let productImages = product.images && product.images.length > 0 ? product.images : (product.image_url ? [product.image_url] : []);
   if (productImages.length === 0) productImages = [defaultPlaceholder];
   const activeImageUrl = productImages[currentImgIndex];
