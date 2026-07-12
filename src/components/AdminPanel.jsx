@@ -106,6 +106,12 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
   const [newSubPrice, setNewSubPrice] = useState('');
   const [editingSubId, setEditingSubId] = useState(null); // Subcategory ID being edited
 
+  // Inventory Filters
+  const [filterText, setFilterText] = useState('');
+  const [filterCategory, setFilterCategory] = useState('');
+  const [filterPrice, setFilterPrice] = useState('asc'); // 'asc', 'desc'
+  const [filterImage, setFilterImage] = useState('all'); // 'all', 'with', 'without'
+
   // Boutique Settings Form States
   const [setWhatsapp, setSetWhatsapp] = useState(settings?.whatsapp_number || '');
   const [setLogoText, setSetLogoText] = useState(settings?.logo_text || '');
@@ -485,6 +491,16 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
     db.exportSettings();
   };
 
+  // Filter products for the table
+  const filteredProducts = products.filter(p => {
+    if (filterText && !p.title.toLowerCase().includes(filterText.toLowerCase()) && !(p.sku && p.sku.toLowerCase().includes(filterText.toLowerCase()))) return false;
+    if (filterCategory && p.category !== filterCategory) return false;
+    const hasImages = (p.images && p.images.length > 0) || !!p.image_url;
+    if (filterImage === 'with' && !hasImages) return false;
+    if (filterImage === 'without' && hasImages) return false;
+    return true;
+  }).sort((a, b) => filterPrice === 'desc' ? b.price - a.price : a.price - b.price);
+
   // Total metrics
   const activeItemsCount = products.filter((p) => p.is_available !== false).length;
   const draftItemsCount = products.filter((p) => p.is_available === false).length;
@@ -742,76 +758,55 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
       {/* Tab Contents */}
       {activeTab === 'inventory' && (
         <>
-          {/* Sync tip */}
-          <div className="glass-panel" style={{
-            padding: '16px 20px',
-            marginBottom: '40px',
-            background: 'rgba(212, 175, 55, 0.03)',
-            border: '1px solid rgba(212, 175, 55, 0.1)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <FileText size={18} color="var(--color-gold-metallic)" style={{ flexShrink: 0 }} />
-              <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', margin: 0, lineHeight: 1.5 }}>
-                <strong>Zero-Server Catalog Sync:</strong> Save updates to browser storage. Click <strong>"Export Products JSON"</strong> to download the catalog file and replace <code>src/assets/products.json</code> in your repository for permanent deployments!
-              </p>
-            </div>
-            
-            <button
-              onClick={db.exportDatabase}
-              className="btn-outline-gold"
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.75rem', padding: '8px 16px', marginTop: '10px' }}
-            >
-              <Download size={12} /> Export Products JSON
-            </button>
-          </div>
 
-          {/* Metric Cards Row */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: '20px',
-            marginBottom: '40px'
-          }}>
-            {/* Active Items */}
-            <div className="glass-panel" style={{ padding: '24px' }}>
-              <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
-                Active Catalog Items
-              </p>
-              <p style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--color-gold-metallic)' }}>
-                {activeItemsCount}
-              </p>
-            </div>
-
-            {/* Draft Items */}
-            <div className="glass-panel" style={{ padding: '24px' }}>
-              <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
-                Hidden Drafts
-              </p>
-              <p style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--color-text-muted)' }}>
-                {draftItemsCount}
-              </p>
-            </div>
-
-            {/* Total Catalog Value */}
-            <div className="glass-panel" style={{ padding: '24px' }}>
-              <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
-                Combined Asset Value
-              </p>
-              <p style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--color-gold-champagne)', fontFamily: 'var(--font-body)' }}>
-                ₹{totalValuation.toLocaleString('en-IN')}
-              </p>
-            </div>
-          </div>
 
           {/* Products Management Grid */}
           <div className="glass-panel" style={{ overflow: 'hidden' }}>
-            <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(212, 175, 55, 0.1)' }}>
-              <h4 style={{ margin: 0 }}>Inventory Catalog ({products.length} items)</h4>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(212, 175, 55, 0.1)', display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h4 style={{ margin: 0 }}>Inventory Catalog ({filteredProducts.length} items)</h4>
+              
+              {/* Filters */}
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                <input 
+                  type="text" 
+                  placeholder="Search name or SKU..." 
+                  className="premium-input" 
+                  style={{ width: '200px' }}
+                  value={filterText}
+                  onChange={(e) => setFilterText(e.target.value)}
+                />
+                
+                <select 
+                  className="premium-input" 
+                  style={{ minWidth: '150px' }}
+                  value={filterCategory}
+                  onChange={(e) => setFilterCategory(e.target.value)}
+                >
+                  <option value="">All Categories</option>
+                  {(settings?.categories || []).map(c => (
+                    <option key={c.id} value={c.name}>{c.name}</option>
+                  ))}
+                </select>
+
+                <select 
+                  className="premium-input" 
+                  value={filterPrice}
+                  onChange={(e) => setFilterPrice(e.target.value)}
+                >
+                  <option value="asc">Price: Low to High</option>
+                  <option value="desc">Price: High to Low</option>
+                </select>
+
+                <select 
+                  className="premium-input" 
+                  value={filterImage}
+                  onChange={(e) => setFilterImage(e.target.value)}
+                >
+                  <option value="all">All Images</option>
+                  <option value="with">Has Images</option>
+                  <option value="without">No Images</option>
+                </select>
+              </div>
             </div>
 
             <div style={{ overflowX: 'auto' }}>
@@ -839,7 +834,7 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
                   </tr>
                 </thead>
                 <tbody>
-                  {products.slice().sort((a, b) => a.price - b.price).map((product) => {
+                  {filteredProducts.map((product) => {
                     const isDraft = product.is_available === false;
                     return (
                       <tr 
