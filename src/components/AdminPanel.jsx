@@ -116,6 +116,7 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
   const [setFacebook, setSetFacebook] = useState(settings?.facebook_page || '');
   const [logoType, setLogoType] = useState(settings?.logo_type || 'text');
   const [logoImageUrl, setLogoImageUrl] = useState(settings?.logo_image_url || '');
+  const [fallbackImageUrl, setFallbackImageUrl] = useState(settings?.product_fallback_image || '');
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Handle Auth Submission
@@ -387,6 +388,17 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
       reader.readAsDataURL(file);
     }
   };
+  const handleFallbackUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const compressed = await compressImage(reader.result, 600, 600, 0.8);
+        setFallbackImageUrl(compressed);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // Save boutique settings
   const handleSaveSettings = async (e) => {
@@ -400,7 +412,8 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
       instagram_handle: setInstagram.trim(),
       facebook_page: setFacebook.trim(),
       logo_type: logoType,
-      logo_image_url: logoImageUrl.trim()
+      logo_image_url: logoImageUrl.trim(),
+      product_fallback_image: fallbackImageUrl.trim()
     };
 
     const success = await db.saveSettings(updatedSettings);
@@ -824,7 +837,7 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
                         {/* Details Thumbnail */}
                         <td style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
                           <img 
-                            src={product.image_url || settings?.logo_image_url || 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&auto=format&fit=crop&q=80'} 
+                            src={product.image_url || settings?.product_fallback_image || 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&auto=format&fit=crop&q=80'} 
                             alt={product.title} 
                             style={{
                               width: '48px',
@@ -1577,7 +1590,7 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
                       />
                     </td>
                     <td style={{ padding: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <img src={p.image_url || settings?.logo_image_url || 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&auto=format&fit=crop&q=80'} alt="" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
+                      <img src={p.image_url || settings?.product_fallback_image || 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&auto=format&fit=crop&q=80'} alt="" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
                       <div>
                         <div style={{ fontSize: '0.9rem', color: 'var(--color-gold-champagne)' }}>{p.title}</div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{p.sku}</div>
@@ -1774,6 +1787,50 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
                     </div>
                   )}
                 </div>
+              </div>
+
+              {/* Product Fallback Image */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', borderTop: '1px solid rgba(212,175,55,0.05)', paddingTop: '20px', marginTop: '10px' }}>
+                <label style={{ fontSize: '0.85rem', color: 'var(--color-text-primary)' }}>Product Fallback Image (No Image)</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <button
+                      type="button"
+                      onClick={() => document.getElementById('fallbackFileInput').click()}
+                      className="btn-outline-gold"
+                      style={{ fontSize: '0.75rem', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <Upload size={14} /> Upload Fallback Image
+                    </button>
+                    <input
+                      id="fallbackFileInput"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFallbackUpload}
+                      style={{ display: 'none' }}
+                    />
+                    
+                    {fallbackImageUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setFallbackImageUrl('')}
+                        style={{ color: 'red', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '0.8rem' }}
+                      >
+                        Remove Fallback
+                      </button>
+                    )}
+                  </div>
+                  
+                  {/* Preview */}
+                  {fallbackImageUrl && (
+                    <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '6px', border: '1px solid rgba(212,175,55,0.1)', display: 'inline-flex' }}>
+                      <img src={fallbackImageUrl} alt="Fallback preview" style={{ maxHeight: '60px', width: 'auto', objectFit: 'cover' }} />
+                    </div>
+                  )}
+                </div>
+                <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>
+                  This image will be displayed for any product that does not have its own uploaded images.
+                </span>
               </div>
 
               {/* Tagline / About */}

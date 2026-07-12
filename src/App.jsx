@@ -187,7 +187,8 @@ export default function App() {
   const isCatalogView = hashBase === '#/catalog';
   const isProductView = hashBase.startsWith('#/product/');
   const productViewId = isProductView ? hashBase.split('#/product/')[1] : null;
-  const isHomeView = !isAdminView && !isCatalogView && !isProductView;
+  const isAboutView = hashBase === '#/about';
+  const isHomeView = !isAdminView && !isCatalogView && !isProductView && !isAboutView;
   const initialCategory = queryParams.get('category') || 'All';
 
   // Calculate items quantity count in shopping bag
@@ -341,6 +342,22 @@ export default function App() {
                 onMouseLeave={(e) => e.target.style.color = currentHash.startsWith('#/catalog') ? 'var(--color-gold-champagne)' : 'var(--color-text-muted)'}
               >
                 Catalog
+              </a>
+              <a 
+                href="#/about" 
+                style={{
+                  color: currentHash === '#/about' ? 'var(--color-gold-champagne)' : 'var(--color-text-muted)',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em',
+                  textDecoration: 'none',
+                  transition: 'var(--transition-fast)'
+                }}
+                onMouseEnter={(e) => e.target.style.color = '#FFFFFF'}
+                onMouseLeave={(e) => e.target.style.color = currentHash === '#/about' ? 'var(--color-gold-champagne)' : 'var(--color-text-muted)'}
+              >
+                About Us
               </a>
               <a 
                 href="#/admin" 
@@ -702,6 +719,55 @@ export default function App() {
               )}
             </motion.div>
           )}
+
+          {isAboutView && (
+            <motion.div
+              key="about-view"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+              className="section-padding"
+              style={{ padding: '80px 5%', minHeight: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+            >
+              <div style={{ maxWidth: '800px', width: '100%', textAlign: 'center', marginTop: '60px' }}>
+                <h1 style={{ fontSize: '2.5rem', marginBottom: '30px', color: 'var(--color-gold-metallic)' }}>About Us</h1>
+                {settings?.logo_type === 'image' && settings?.logo_image_url ? (
+                  <img src={settings.logo_image_url} alt="Logo" style={{ maxHeight: '120px', marginBottom: '30px' }} />
+                ) : (
+                  <h2 style={{ fontSize: '2.5rem', fontFamily: 'var(--font-heading)', color: 'var(--color-gold-champagne)', marginBottom: '30px' }}>
+                    {settings?.logo_text || 'ALANKARA JEWELS'}
+                  </h2>
+                )}
+                
+                <p style={{ fontSize: '1.1rem', lineHeight: 1.8, color: 'var(--color-text-secondary)', marginBottom: '50px', whiteSpace: 'pre-line' }}>
+                  {settings?.about_text || 'Welcome to our boutique.'}
+                </p>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '40px', textAlign: 'left', background: 'rgba(212,175,55,0.03)', border: '1px solid rgba(212,175,55,0.1)', padding: '50px', borderRadius: '12px' }}>
+                  {settings?.store_address && (
+                    <div>
+                      <h3 style={{ fontSize: '1.2rem', color: 'var(--color-gold-champagne)', marginBottom: '15px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Our Location</h3>
+                      <p style={{ color: 'var(--color-text-muted)', lineHeight: 1.6, whiteSpace: 'pre-line' }}>{settings.store_address}</p>
+                    </div>
+                  )}
+                  <div>
+                    <h3 style={{ fontSize: '1.2rem', color: 'var(--color-gold-champagne)', marginBottom: '15px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Contact Us</h3>
+                    {settings?.whatsapp_number && <p style={{ color: 'var(--color-text-muted)', marginBottom: '8px' }}>WhatsApp: {settings.whatsapp_number}</p>}
+                    {settings?.support_email && <p style={{ color: 'var(--color-text-muted)', marginBottom: '8px' }}>Email: {settings.support_email}</p>}
+                  </div>
+                  {(settings?.instagram_handle || settings?.facebook_page) && (
+                    <div>
+                      <h3 style={{ fontSize: '1.2rem', color: 'var(--color-gold-champagne)', marginBottom: '15px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Follow Us</h3>
+                      {settings?.instagram_handle && <p style={{ color: 'var(--color-text-muted)', marginBottom: '8px' }}>Instagram: @{settings.instagram_handle}</p>}
+                      {settings?.facebook_page && <p style={{ color: 'var(--color-text-muted)', marginBottom: '8px' }}>Facebook: {settings.facebook_page}</p>}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
         </AnimatePresence>
       </main>
 
