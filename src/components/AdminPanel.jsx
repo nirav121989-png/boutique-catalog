@@ -245,7 +245,7 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
       offer_type: formOfferType,
       offer_tag: formOfferType === 'bogo' ? 'BOGO' : (formOfferType === 'discount' ? 'DISCOUNT' : formOfferTag.trim()),
       compare_at_price: formOfferType === 'discount' && formComparePrice ? Number(formComparePrice) : null,
-      image_url: finalImages[0], // First image acts as main thumbnail
+      image_url: finalImages[0] || '', // First image acts as main thumbnail
       images: finalImages,      // Dynamic variations array
       description: formDescription.trim(),
       is_available: formAvailable,
