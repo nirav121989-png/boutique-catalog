@@ -811,7 +811,7 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
                   </tr>
                 </thead>
                 <tbody>
-                  {products.map((product) => {
+                  {products.slice().sort((a, b) => a.price - b.price).map((product) => {
                     const isDraft = product.is_available === false;
                     return (
                       <tr 
@@ -1138,7 +1138,7 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
                       </tr>
                     </thead>
                     <tbody>
-                      {(selectedSubCatParent.subcategories || []).map((sub) => (
+                      {([...(selectedSubCatParent.subcategories || [])]).sort((a, b) => (a.default_price || 0) - (b.default_price || 0)).map((sub) => (
                         <tr key={sub.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
                           <td style={{ padding: '10px 8px', fontWeight: 600 }}>{sub.name}</td>
                           <td style={{ padding: '10px 8px', fontFamily: 'var(--font-body)' }}>₹{sub.default_price?.toLocaleString('en-IN')}</td>
@@ -1351,7 +1351,7 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
                 <h4 style={{ fontSize: '1.1rem', marginBottom: '20px', color: 'var(--color-text-primary)' }}>Current Categories</h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {[...(settings?.categories || [])]
-                    .sort((a, b) => a.priority - b.priority)
+                    .sort((a, b) => a.name.localeCompare(b.name))
                     .map((cat) => (
                       <div
                         key={cat.id}
@@ -1567,7 +1567,7 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
                 </tr>
               </thead>
               <tbody>
-                {products.map(p => (
+                {products.slice().sort((a, b) => a.price - b.price).map(p => (
                   <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                     <td style={{ padding: '16px' }}>
                       <input 
@@ -1997,7 +1997,7 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
                       }}
                     >
                       {((settings?.categories && settings.categories.length > 0)
-                        ? [...settings.categories].sort((a, b) => a.priority - b.priority)
+                        ? [...settings.categories].sort((a, b) => a.name.localeCompare(b.name))
                         : [
                             { id: '1', name: 'Necklaces', priority: 1 },
                             { id: '2', name: 'Rings', priority: 2 },
@@ -2045,7 +2045,7 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
                         if (subList.length === 0) {
                           return <option value="">No Subcategories</option>;
                         }
-                        return subList.map(sub => (
+                        return [...subList].sort((a, b) => (a.default_price || 0) - (b.default_price || 0)).map(sub => (
                           <option key={sub.id} value={sub.name}>
                             {sub.name} {sub.default_price ? `(₹${sub.default_price})` : ''}
                           </option>
