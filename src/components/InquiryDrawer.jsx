@@ -139,6 +139,9 @@ export default function InquiryDrawer({ isOpen, onClose, selectedItems, onUpdate
       text += `🛍️ *Order Items:* \n`;
       selectedItems.forEach((item) => {
         text += `• ${item.quantity}x ${item.title} (Ref: ${item.sku})\n`;
+        if (item.offer_type && item.offer_type !== 'none') {
+          text += `   🎁 Offer Applied: ${item.offer_tag}\n`;
+        }
         text += `   - ₹${(item.price * item.quantity).toLocaleString('en-IN')}\n`;
       });
 

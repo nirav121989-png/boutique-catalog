@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, Plus, LogOut, Check, Eye, EyeOff, Edit, Trash2, Download, AlertCircle, FileText, Settings, ShoppingBag, Upload, X } from 'lucide-react';
+import { Lock, Plus, LogOut, Check, Eye, EyeOff, Edit, Copy, Trash2, Download, AlertCircle, FileText, Settings, ShoppingBag, Upload, X } from 'lucide-react';
 import { db } from '../db/db';
 import { auth } from '../db/firebase';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
@@ -50,7 +50,12 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [authError, setAuthError] = useState('');
-  const [activeTab, setActiveTab] = useState('inventory'); // inventory, categories, settings
+  const [activeTab, setActiveTab] = useState('inventory'); // inventory, categories, settings, offers
+  
+  // Daily Offers States
+  const [selectedOffersProducts, setSelectedOffersProducts] = useState(new Set());
+  const [offerActionType, setOfferActionType] = useState('discount'); // discount, flat, bogo, free_gift
+  const [offerActionValue, setOfferActionValue] = useState('');
 
   React.useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -154,7 +159,7 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
     setFormIsExclusive(false);
     setFormStockQty(1);
     setFormWeightGrams(100);
-    setFormDimensions({ l: '', w: '', h: '' });
+    setFormDimensions({ l: '20', w: '15', h: '5' });
     setIsFormOpen(true);
   };
 
@@ -184,6 +189,32 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
     setFormStockQty(product.stock_qty !== undefined ? product.stock_qty : 1);
     setFormWeightGrams(product.weight_grams || 100);
     setFormDimensions(product.dimensions || { l: '', w: '', h: '' });
+    setIsFormOpen(true);
+  };
+
+  // Open modal for Copying an existing product
+  const handleOpenCopy = (product) => {
+    setEditingItem(null); // It's a new item!
+    setFormTitle(product.title + " (Copy)");
+    setFormSku('REF-' + Math.floor(100 + Math.random() * 900)); // Generate new SKU
+    setFormCategory(product.category || '');
+    setFormSubcategory(product.subcategory || '');
+    setFormCollectionLine(product.collection_line || 'Daily Wear');
+    setFormPurity(product.purity || 'Premium Imitation');
+    setFormPrice(product.price || '');
+    setFormOfferType(product.offer_type || 'none');
+    setFormOfferTag(product.offer_tag || '');
+    setFormComparePrice(product.compare_at_price || '');
+    // Clear images for the copy
+    setFormImages([]);
+    setFormImageUrlInput('');
+    setFormDescription(product.description || '');
+    setFormAvailable(product.is_available !== false);
+    setFormIsLatest(false); // Reset flags for the copy
+    setFormIsExclusive(false);
+    setFormStockQty(product.stock_qty !== undefined ? product.stock_qty : 1);
+    setFormWeightGrams(product.weight_grams || 100);
+    setFormDimensions(product.dimensions || { l: '20', w: '15', h: '5' });
     setIsFormOpen(true);
   };
 
@@ -257,6 +288,93 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
       is_available: product.is_available === false ? true : false
     };
     await db.saveItem(updatedPayload);
+  };
+
+  // --- DAILY OFFERS LOGIC ---
+  const toggleOfferSelection = (productId) => {
+    const newSet = new Set(selectedOffersProducts);
+    if (newSet.has(productId)) newSet.delete(productId);
+    else newSet.add(productId);
+    setSelectedOffersProducts(newSet);
+  };
+
+  const selectAllOffers = () => {
+    if (selectedOffersProducts.size === products.length) {
+      setSelectedOffersProducts(new Set());
+    } else {
+      setSelectedOffersProducts(new Set(products.map(p => p.id)));
+    }
+  };
+
+  const handleApplyOffer = async () => {
+    if (selectedOffersProducts.size === 0) return alert("Select at least one product.");
+    if (offerActionType === 'discount' || offerActionType === 'flat') {
+      if (!offerActionValue || isNaN(offerActionValue) || Number(offerActionValue) <= 0) {
+        return alert("Please enter a valid discount amount.");
+      }
+    }
+
+    const val = Number(offerActionValue);
+    const promises = [];
+    
+    for (const pid of selectedOffersProducts) {
+      const prod = products.find(p => p.id === pid);
+      if (!prod) continue;
+
+      let newPrice = prod.price;
+      let comparePrice = prod.compare_at_price || prod.price; 
+      
+      const basePrice = prod.compare_at_price ? prod.compare_at_price : prod.price;
+
+      if (offerActionType === 'discount') {
+        newPrice = Math.round(basePrice - (basePrice * (val / 100)));
+      } else if (offerActionType === 'flat') {
+        newPrice = Math.max(1, basePrice - val);
+      } else {
+        newPrice = basePrice;
+        comparePrice = null; 
+      }
+
+      let offerTag = '';
+      if (offerActionType === 'bogo') offerTag = 'BOGO';
+      else if (offerActionType === 'free_gift') offerTag = 'FREE GIFT';
+      else if (offerActionType === 'discount') offerTag = 'DISCOUNT';
+      else if (offerActionType === 'flat') offerTag = `FLAT ₹${val} OFF`;
+
+      promises.push(db.saveItem({
+        ...prod,
+        price: newPrice,
+        compare_at_price: (offerActionType === 'discount' || offerActionType === 'flat') ? basePrice : null,
+        offer_type: offerActionType,
+        offer_tag: offerTag
+      }));
+    }
+
+    await Promise.all(promises);
+    setSelectedOffersProducts(new Set());
+    alert("Offers applied successfully!");
+  };
+
+  const handleRemoveOffer = async () => {
+    if (selectedOffersProducts.size === 0) return alert("Select at least one product.");
+    const promises = [];
+    for (const pid of selectedOffersProducts) {
+      const prod = products.find(p => p.id === pid);
+      if (!prod) continue;
+      
+      const restoredPrice = prod.compare_at_price ? prod.compare_at_price : prod.price;
+
+      promises.push(db.saveItem({
+        ...prod,
+        price: restoredPrice,
+        compare_at_price: null,
+        offer_type: 'none',
+        offer_tag: ''
+      }));
+    }
+    await Promise.all(promises);
+    setSelectedOffersProducts(new Set());
+    alert("Offers removed successfully!");
   };
 
   // Local Logo file uploader handler
@@ -551,6 +669,28 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
         </button>
 
         <button
+          onClick={() => setActiveTab('offers')}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            borderBottom: activeTab === 'offers' ? '2px solid var(--color-gold-metallic)' : '2px solid transparent',
+            color: activeTab === 'offers' ? '#FFFFFF' : 'var(--color-text-muted)',
+            padding: '10px 16px',
+            cursor: 'pointer',
+            fontFamily: 'var(--font-header)',
+            fontSize: '0.9rem',
+            fontWeight: 700,
+            letterSpacing: '0.08em',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            transition: 'var(--transition-fast)'
+          }}
+        >
+          <ShoppingBag size={16} /> Daily Offers
+        </button>
+
+        <button
           onClick={() => setActiveTab('settings')}
           style={{
             background: 'transparent',
@@ -803,6 +943,21 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
                               onMouseLeave={(e) => e.target.style.color = 'var(--color-text-muted)'}
                             >
                               <Edit size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleOpenCopy(product)}
+                              title="Duplicate Product"
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                cursor: 'pointer',
+                                color: 'var(--color-text-muted)',
+                                transition: 'var(--transition-fast)'
+                              }}
+                              onMouseEnter={(e) => e.target.style.color = 'var(--color-gold-metallic)'}
+                              onMouseLeave={(e) => e.target.style.color = 'var(--color-text-muted)'}
+                            >
+                              <Copy size={16} />
                             </button>
                             <button
                               onClick={() => handleDeleteProduct(product.id, product.title)}
@@ -1340,6 +1495,145 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
         </div>
       )}
 
+      {activeTab === 'offers' && (
+        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+          <div className="glass-panel" style={{ padding: '24px', marginBottom: '24px' }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <ShoppingBag size={20} color="var(--color-gold-metallic)" /> Daily Offers Management
+            </h3>
+            <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '200px' }}>
+                <label style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Select Offer Type</label>
+                <select
+                  value={offerActionType}
+                  onChange={(e) => setOfferActionType(e.target.value)}
+                  className="premium-input"
+                >
+                  <option value="discount">Percentage Discount (%)</option>
+                  <option value="flat">Flat Amount Discount (₹)</option>
+                  <option value="bogo">Buy 1 Get 1 Free (BOGO)</option>
+                  <option value="free_gift">Free Gift With Purchase</option>
+                </select>
+              </div>
+
+              {(offerActionType === 'discount' || offerActionType === 'flat') && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '120px' }}>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                    {offerActionType === 'discount' ? 'Discount %' : 'Amount Off ₹'}
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={offerActionValue}
+                    onChange={(e) => setOfferActionValue(e.target.value)}
+                    className="premium-input"
+                    placeholder={offerActionType === 'discount' ? 'e.g. 20' : 'e.g. 500'}
+                  />
+                </div>
+              )}
+
+              <button
+                onClick={handleApplyOffer}
+                style={{
+                  background: 'linear-gradient(135deg, var(--color-gold-metallic) 0%, var(--color-gold-champagne) 100%)',
+                  color: '#000',
+                  border: 'none',
+                  padding: '12px 24px',
+                  borderRadius: '6px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  height: '46px'
+                }}
+              >
+                Apply Offer
+              </button>
+
+              <button
+                onClick={handleRemoveOffer}
+                style={{
+                  background: 'rgba(255,0,0,0.1)',
+                  color: '#ff6b6b',
+                  border: '1px solid rgba(255,0,0,0.3)',
+                  padding: '12px 24px',
+                  borderRadius: '6px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  height: '46px',
+                  marginLeft: 'auto'
+                }}
+              >
+                Clear Offers
+              </button>
+            </div>
+          </div>
+
+          <div className="glass-panel" style={{ padding: '0', overflow: 'hidden' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: 'rgba(212,175,55,0.05)', borderBottom: '1px solid rgba(212,175,55,0.1)' }}>
+                  <th style={{ padding: '16px', textAlign: 'left', width: '50px' }}>
+                    <input 
+                      type="checkbox"
+                      checked={selectedOffersProducts.size === products.length && products.length > 0}
+                      onChange={selectAllOffers}
+                    />
+                  </th>
+                  <th style={{ padding: '16px', textAlign: 'left', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>Product</th>
+                  <th style={{ padding: '16px', textAlign: 'left', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>Price</th>
+                  <th style={{ padding: '16px', textAlign: 'left', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>Active Offer</th>
+                </tr>
+              </thead>
+              <tbody>
+                {products.map(p => (
+                  <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <td style={{ padding: '16px' }}>
+                      <input 
+                        type="checkbox"
+                        checked={selectedOffersProducts.has(p.id)}
+                        onChange={() => toggleOfferSelection(p.id)}
+                      />
+                    </td>
+                    <td style={{ padding: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <img src={p.image_url} alt="" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
+                      <div>
+                        <div style={{ fontSize: '0.9rem', color: 'var(--color-gold-champagne)' }}>{p.title}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{p.sku}</div>
+                      </div>
+                    </td>
+                    <td style={{ padding: '16px' }}>
+                      {p.compare_at_price ? (
+                        <>
+                          <div style={{ fontSize: '0.75rem', textDecoration: 'line-through', color: 'var(--color-text-muted)' }}>₹{p.compare_at_price.toLocaleString()}</div>
+                          <div style={{ fontSize: '0.9rem', color: '#fff' }}>₹{p.price.toLocaleString()}</div>
+                        </>
+                      ) : (
+                        <div style={{ fontSize: '0.9rem', color: '#fff' }}>₹{p.price.toLocaleString()}</div>
+                      )}
+                    </td>
+                    <td style={{ padding: '16px' }}>
+                      {p.offer_type && p.offer_type !== 'none' ? (
+                        <span style={{ 
+                          background: p.offer_type === 'bogo' ? 'rgba(220, 38, 38, 0.2)' : 'rgba(212, 175, 55, 0.2)',
+                          color: p.offer_type === 'bogo' ? '#ef4444' : 'var(--color-gold-champagne)',
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          fontSize: '0.75rem',
+                          fontWeight: 600
+                        }}>
+                          {p.offer_tag}
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>None</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {activeTab === 'settings' && (
         /* Boutique settings management suite */
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
@@ -1681,25 +1975,12 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
                   />
                 </div>
 
-                {/* SKU & Category & Subcategory Row */}
+                {/* Category & Subcategory Row */}
                 <div style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
                   gap: '16px'
                 }}>
-                  {/* SKU */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>SKU Reference *</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="REF-N501"
-                      value={formSku}
-                      onChange={(e) => setFormSku(e.target.value)}
-                      className="premium-input"
-                    />
-                  </div>
-
                   {/* Category dropdown */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <label style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Category *</label>
@@ -1791,35 +2072,9 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
                   </div>
                 </div>
 
-                {/* Plating Type & Collection Line Row */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                  gap: '16px'
-                }}>
-                  {/* Plating type dropdown */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Plating / Type *</label>
-                    <select
-                      value={formPurity}
-                      onChange={(e) => setFormPurity(e.target.value)}
-                      style={{
-                        background: 'rgba(10, 10, 10, 0.6)',
-                        border: '1px solid var(--color-gold-border)',
-                        color: 'var(--color-text-primary)',
-                        padding: '13px 16px',
-                        borderRadius: '6px',
-                        outline: 'none',
-                        cursor: 'pointer',
-                        fontFamily: 'var(--font-body)'
-                      }}
-                    >
-                      <option value="Premium Imitation">Premium Imitation</option>
-                      <option value="1g Gold Plated">1g Gold Plated</option>
-                      <option value="2g Gold Plated">2g Gold Plated</option>
-                      <option value="Brass / Alloy Base">Brass / Alloy Base</option>
-                    </select>
-                  </div>
+                {/* Collection Line Row */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+
 
                   {/* Collection Line dropdown */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>

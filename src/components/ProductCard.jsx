@@ -109,19 +109,19 @@ export default function ProductCard({ product, selectedItems, onToggleSelect, se
       <button
         onClick={async (e) => {
           e.stopPropagation();
-          const url = `${window.location.origin}${window.location.pathname}#/product/${id}`;
+          const productUrl = `${window.location.origin}${window.location.pathname}#/product/${product.id}`;
           if (navigator.share) {
             try {
               await navigator.share({
-                title,
+                title: product?.title || 'Alankara Jewels',
                 text: `Check out this gorgeous piece from Alankara Jewels!`,
-                url
+                url: productUrl
               });
               return;
             } catch (err) {}
           }
           try {
-            await navigator.clipboard.writeText(url);
+            await navigator.clipboard.writeText(productUrl);
             setCopySuccess(true);
             setTimeout(() => setCopySuccess(false), 2000);
           } catch (err) {}
@@ -224,6 +224,43 @@ export default function ProductCard({ product, selectedItems, onToggleSelect, se
                 textAlign: 'center'
               }}>
                 {discountPercentage}% OFF
+              </span>
+            )}
+            {product.offer_type === 'flat' && (
+              <span style={{
+                background: 'linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%)',
+                color: '#000000',
+                padding: '4px 10px',
+                fontSize: '0.65rem',
+                fontFamily: 'var(--font-header)',
+                fontWeight: 800,
+                borderRadius: '4px',
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                boxShadow: '0 2px 8px rgba(212, 175, 55, 0.3)',
+                display: 'inline-block',
+                textAlign: 'center'
+              }}>
+                {product.offer_tag}
+              </span>
+            )}
+            {product.offer_type === 'free_gift' && (
+              <span style={{
+                background: 'linear-gradient(135deg, #10B981 0%, #047857 100%)',
+                color: '#FFFFFF',
+                padding: '4px 10px',
+                fontSize: '0.65rem',
+                fontFamily: 'var(--font-header)',
+                fontWeight: 800,
+                borderRadius: '4px',
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                boxShadow: '0 0 10px rgba(16, 185, 129, 0.5)',
+                display: 'inline-block',
+                textAlign: 'center',
+                border: '1px solid rgba(255, 255, 255, 0.15)'
+              }}>
+                FREE GIFT
               </span>
             )}
             {product.offer_type === 'custom' && product.offer_tag && (
@@ -773,15 +810,17 @@ export default function ProductCard({ product, selectedItems, onToggleSelect, se
                       )}
                       {product.offer_type && product.offer_type !== 'none' && (
                         <span style={{
-                          background: product.offer_type === 'bogo' ? 'linear-gradient(135deg, #DC2626 0%, #991B1B 100%)' : (product.offer_type === 'discount' ? 'linear-gradient(135deg, #F3E5AB 0%, #D4AF37 100%)' : 'linear-gradient(135deg, #4F46E5 0%, #3730A3 100%)'),
-                          color: product.offer_type === 'discount' ? '#000000' : '#FFFFFF',
+                          background: product.offer_type === 'bogo' ? 'linear-gradient(135deg, #DC2626 0%, #991B1B 100%)' : 
+                                     (product.offer_type === 'free_gift' ? 'linear-gradient(135deg, #10B981 0%, #047857 100%)' : 
+                                     (product.offer_type === 'discount' || product.offer_type === 'flat' ? 'linear-gradient(135deg, #F3E5AB 0%, #D4AF37 100%)' : 'linear-gradient(135deg, #4F46E5 0%, #3730A3 100%)')),
+                          color: (product.offer_type === 'discount' || product.offer_type === 'flat') ? '#000000' : '#FFFFFF',
                           padding: '2px 8px',
                           fontSize: '0.6rem',
                           fontWeight: 800,
                           borderRadius: '3px',
                           textTransform: 'uppercase'
                         }}>
-                          {product.offer_type === 'bogo' ? 'BOGO' : (product.offer_type === 'discount' ? `${discountPercentage}% OFF` : product.offer_tag)}
+                          {product.offer_type === 'bogo' ? 'BOGO' : (product.offer_type === 'free_gift' ? 'FREE GIFT' : (product.offer_type === 'discount' ? `${discountPercentage}% OFF` : product.offer_tag))}
                         </span>
                       )}
                       {product.collection_line && (
@@ -911,8 +950,7 @@ export default function ProductCard({ product, selectedItems, onToggleSelect, se
                         msg += `🏷️ *Ref SKU:* ${sku}\n`;
                         msg += `🔑 *Category:* ${category}${product.subcategory ? ` • ${product.subcategory}` : ''}\n`;
                         if (product.offer_type && product.offer_type !== 'none') {
-                          const tag = product.offer_type === 'bogo' ? 'BOGO' : (product.offer_type === 'discount' ? 'DISCOUNT' : product.offer_tag);
-                          msg += `🎁 *Offer:* ${tag}\n`;
+                          msg += `🎁 *Offer:* ${product.offer_tag}\n`;
                         }
                         msg += `💵 *Price:* ₹${price.toLocaleString('en-IN')}\n\n`;
                         msg += `Please confirm availability and booking details.`;
@@ -940,7 +978,8 @@ export default function ProductCard({ product, selectedItems, onToggleSelect, se
                         onClick={() => {
                           const designIndex = productImages.indexOf(activeImageUrl) + 1;
                           const designLabel = productImages.length > 1 ? ` (Design #${designIndex})` : '';
-                          const shareMsg = `✨ Check out this gorgeous piece from Alankara Jewels!\n\n💍 *${title}${designLabel}*\n💵 Price: ₹${price.toLocaleString('en-IN')}\n\nShop here: ${window.location.href}`;
+                          const productUrl = `${window.location.origin}${window.location.pathname}#/product/${product.id}`;
+                          const shareMsg = `✨ Check out this gorgeous piece from Alankara Jewels!\n\n💍 *${title}${designLabel}*\n💵 Price: ₹${price.toLocaleString('en-IN')}\n\nShop here: ${productUrl}`;
                           window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareMsg)}`, '_blank');
                         }}
                         style={{
@@ -968,7 +1007,8 @@ export default function ProductCard({ product, selectedItems, onToggleSelect, se
                       {/* Copy Link */}
                       <button
                         onClick={() => {
-                          navigator.clipboard.writeText(window.location.href).then(() => {
+                          const productUrl = `${window.location.origin}${window.location.pathname}#/product/${product.id}`;
+                          navigator.clipboard.writeText(productUrl).then(() => {
                             setCopySuccess(true);
                             setTimeout(() => setCopySuccess(false), 2500);
                           });
