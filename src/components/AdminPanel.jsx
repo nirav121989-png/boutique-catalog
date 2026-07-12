@@ -762,23 +762,23 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
 
           {/* Products Management Grid */}
           <div className="glass-panel" style={{ overflow: 'hidden' }}>
-            <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(212, 175, 55, 0.1)', display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(212, 175, 55, 0.1)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <h4 style={{ margin: 0 }}>Inventory Catalog ({filteredProducts.length} items)</h4>
               
               {/* Filters */}
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
                 <input 
                   type="text" 
                   placeholder="Search name or SKU..." 
                   className="premium-input" 
-                  style={{ width: '200px' }}
+                  style={{ width: '100%' }}
                   value={filterText}
                   onChange={(e) => setFilterText(e.target.value)}
                 />
                 
                 <select 
                   className="premium-input" 
-                  style={{ minWidth: '150px' }}
+                  style={{ width: '100%' }}
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
                 >
@@ -789,7 +789,8 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
                 </select>
 
                 <select 
-                  className="premium-input" 
+                  className="premium-input"
+                  style={{ width: '100%' }}
                   value={filterPrice}
                   onChange={(e) => setFilterPrice(e.target.value)}
                 >
@@ -798,7 +799,8 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
                 </select>
 
                 <select 
-                  className="premium-input" 
+                  className="premium-input"
+                  style={{ width: '100%' }}
                   value={filterImage}
                   onChange={(e) => setFilterImage(e.target.value)}
                 >
