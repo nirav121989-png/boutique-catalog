@@ -296,20 +296,10 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
   };
 
   const handleSaveCategories = async (updatedCats) => {
-    const updatedSettings = {
-      whatsapp_number: setWhatsapp.trim(),
-      logo_text: setLogoText.trim() || 'ALANKARA JEWELS',
-      about_text: setAboutText.trim(),
-      support_email: setEmail.trim(),
-      store_address: setAddress.trim(),
-      instagram_handle: setInstagram.trim(),
-      facebook_page: setFacebook.trim(),
-      logo_type: logoType,
-      logo_image_url: logoImageUrl.trim(),
-      categories: updatedCats
-    };
-
-    await db.saveSettings(updatedSettings);
+    const success = await db.saveSettings({ categories: updatedCats });
+    if (!success) {
+      alert("Error saving category. The uploaded image might be too large. Please try a smaller image or use an image URL.");
+    }
   };
 
   const handleCatImageUpload = (e, isEditing) => {
@@ -317,7 +307,7 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
     if (file) {
       const reader = new FileReader();
       reader.onloadend = async () => {
-        const compressed = await compressImage(reader.result, 800, 800, 0.75);
+        const compressed = await compressImage(reader.result, 400, 400, 0.5);
         if (isEditing) {
           setEditingCatImage(compressed);
         } else {
