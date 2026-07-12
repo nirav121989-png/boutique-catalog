@@ -111,7 +111,9 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
   const [filterCategory, setFilterCategory] = useState('');
   const [filterPrice, setFilterPrice] = useState('asc'); // 'asc', 'desc'
   const [filterImage, setFilterImage] = useState('all'); // 'all', 'with', 'without'
-  const [quickUploadProductId, setQuickUploadProductId] = useState(null);
+  const [isQuickImageModalOpen, setIsQuickImageModalOpen] = useState(false);
+  const [quickImageProduct, setQuickImageProduct] = useState(null);
+  const [quickImagesList, setQuickImagesList] = useState([]);
 
   // Boutique Settings Form States
   const [setWhatsapp, setSetWhatsapp] = useState(settings?.whatsapp_number || '');
@@ -241,21 +243,36 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
     }
   };
 
-  const handleQuickUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file || !quickUploadProductId) return;
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const compressed = await compressImage(reader.result, 800, 800, 0.7);
-      const productToUpdate = products.find(p => p.id === quickUploadProductId);
-      if (productToUpdate) {
-        const payload = { ...productToUpdate, image_url: compressed, images: [compressed] };
-        await db.saveItem(payload);
-      }
-      setQuickUploadProductId(null);
-      e.target.value = null;
+  const handleQuickImagesUpload = (e) => {
+    const files = Array.from(e.target.files);
+    const promises = files.map((file) => {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.readAsDataURL(file);
+      });
+    });
+
+    Promise.all(promises).then(async (base64Images) => {
+      const compressed = await Promise.all(
+        base64Images.map(img => compressImage(img, 800, 800, 0.7))
+      );
+      setQuickImagesList((prev) => [...prev, ...compressed]);
+    });
+  };
+
+  const handleQuickImageSave = async () => {
+    if (!quickImageProduct) return;
+    const payload = {
+      ...quickImageProduct,
+      image_url: quickImagesList[0] || '',
+      images: quickImagesList
     };
-    reader.readAsDataURL(file);
+    await db.saveItem(payload);
+    setIsQuickImageModalOpen(false);
+    setQuickImageProduct(null);
+    setQuickImagesList([]);
+    alert("Images updated successfully!");
   };
 
   // Save product (Add or Edit)
@@ -777,14 +794,6 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
       {activeTab === 'inventory' && (
         <>
 
-          <input 
-            id="quickImageUpload"
-            type="file" 
-            accept="image/*" 
-            style={{ display: 'none' }} 
-            onChange={handleQuickUpload} 
-          />
-
           {/* Products Management Grid */}
           <div className="glass-panel" style={{ overflow: 'hidden' }}>
             <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(212, 175, 55, 0.1)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -965,8 +974,9 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
                           <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
                             <button
                               onClick={() => {
-                                setQuickUploadProductId(product.id);
-                                document.getElementById('quickImageUpload').click();
+                                setQuickImageProduct(product);
+                                setQuickImagesList(product.images?.length > 0 ? product.images : (product.image_url ? [product.image_url] : []));
+                                setIsQuickImageModalOpen(true);
                               }}
                               title="Quick Upload Image"
                               style={{
@@ -2561,6 +2571,72 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
               </form>
             </motion.div>
           </>
+        )}
+
+        {isQuickImageModalOpen && (
+          <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.8)', zIndex: 1000,
+            display: 'flex', alignItems: 'center', justifyContent: 'center'
+          }}>
+            <div className="glass-panel" style={{ width: '100%', maxWidth: '600px', padding: '32px', position: 'relative' }}>
+              <button 
+                onClick={() => setIsQuickImageModalOpen(false)}
+                style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer' }}
+              >
+                <X size={24} />
+              </button>
+              <h3 style={{ marginBottom: '24px', color: 'var(--color-gold-metallic)', fontSize: '1.2rem' }}>Images for {quickImageProduct?.title}</h3>
+              
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
+                {quickImagesList.map((img, i) => (
+                  <div key={i} style={{ position: 'relative', width: '100px', height: '100px', borderRadius: '8px', overflow: 'hidden' }}>
+                    <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <button 
+                      onClick={() => setQuickImagesList(prev => prev.filter((_, idx) => idx !== i))}
+                      style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(0,0,0,0.7)', color: 'white', border: 'none', borderRadius: '50%', width: '24px', height: '24px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ marginBottom: '24px' }}>
+                <input 
+                  type="file" 
+                  id="quickModalUpload" 
+                  accept="image/*" 
+                  multiple 
+                  style={{ display: 'none' }}
+                  onChange={handleQuickImagesUpload}
+                />
+                <button 
+                  onClick={() => document.getElementById('quickModalUpload').click()}
+                  className="btn-outline-gold"
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', justifyContent: 'center', padding: '12px' }}
+                >
+                  <Upload size={18} /> Select Images
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '16px' }}>
+                <button 
+                  onClick={() => setIsQuickImageModalOpen(false)}
+                  style={{ padding: '12px 24px', background: 'transparent', border: '1px solid var(--color-text-muted)', color: 'var(--color-text-muted)', borderRadius: '4px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600, textTransform: 'uppercase' }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleQuickImageSave}
+                  className="btn-gold"
+                  style={{ padding: '12px 24px' }}
+                >
+                  Save Images
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </AnimatePresence>
     </div>
