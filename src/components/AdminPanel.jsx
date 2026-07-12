@@ -1356,40 +1356,30 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
             flexWrap: 'wrap'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <FileText size={18} color="var(--color-gold-metallic)" style={{ flexShrink: 0 }} />
+              <AlertCircle size={18} color="#ff6b6b" style={{ flexShrink: 0 }} />
               <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', margin: 0, lineHeight: 1.5 }}>
-                <strong>Zero-Server Settings Sync:</strong> Save settings to browser storage. Click <strong>"Export Settings JSON"</strong> to download the config file and replace <code>src/assets/settings.json</code> in your repository for permanent deployments!
+                <strong>Database Error Fix:</strong> If you are unable to save Categories, your database is full. Click the button to the right to clear out the large images and fix the issue.
               </p>
             </div>
             
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '10px' }}>
-              <button
-                onClick={handleExportSettings}
-                className="btn-outline-gold"
-                style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.75rem', padding: '8px 16px' }}
-              >
-                <Download size={12} /> Export Settings JSON
-              </button>
-              
-              <button
-                type="button"
-                onClick={async () => {
-                  if (window.confirm("This will clear all category images to fix the 1MB database limit error. Continue?")) {
-                    const currentCats = settings?.categories || [];
-                    const clearedCats = currentCats.map(c => ({ ...c, image_url: '' }));
-                    const success = await db.saveSettings({ categories: clearedCats });
-                    if (success) {
-                      alert("Database fixed! You can now upload your category images again.");
-                    } else {
-                      alert("Still failing. Try removing them one by one.");
-                    }
+            <button
+              type="button"
+              onClick={async () => {
+                if (window.confirm("This will clear all category images to fix the 1MB database limit error. Continue?")) {
+                  const currentCats = settings?.categories || [];
+                  const clearedCats = currentCats.map(c => ({ ...c, image_url: '' }));
+                  const success = await db.saveSettings({ categories: clearedCats });
+                  if (success) {
+                    alert("Database fixed! You can now upload your category images again.");
+                  } else {
+                    alert("Still failing. Try removing them one by one.");
                   }
-                }}
-                style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.75rem', padding: '8px 16px', background: 'rgba(255,0,0,0.1)', color: '#ff6b6b', border: '1px solid rgba(255,0,0,0.3)', borderRadius: '4px', cursor: 'pointer' }}
-              >
-                <AlertCircle size={12} /> Fix Database (Clear Images)
-              </button>
-            </div>
+                }
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.75rem', padding: '8px 16px', background: 'rgba(255,0,0,0.1)', color: '#ff6b6b', border: '1px solid rgba(255,0,0,0.3)', borderRadius: '4px', cursor: 'pointer', marginTop: '10px' }}
+            >
+              <AlertCircle size={12} /> Fix Database (Clear Images)
+            </button>
           </div>
 
           {/* Settings form container */}
