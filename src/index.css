@@ -241,4 +241,25 @@ h1, h2, h3, h4, h5, h6 {
   .section-padding {
     padding: 60px 4% 40px 4%;
   }
+  
+  .app-header {
+    flex-direction: column !important;
+    gap: 12px !important;
+    padding: 12px 16px !important;
+  }
+  
+  .nav-links {
+    gap: 12px !important;
+    font-size: 0.75rem !important;
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .nav-links a {
+    font-size: 0.7rem !important;
+  }
+
+  .glass-panel {
+    padding: 16px !important;
+  }
 }

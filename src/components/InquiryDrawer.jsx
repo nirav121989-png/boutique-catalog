@@ -355,24 +355,35 @@ export default function InquiryDrawer({ isOpen, onClose, selectedItems, onUpdate
                     Proceed to Checkout
                   </button>
                 ) : (
-                  <button
-                    onClick={handlePlaceOrder}
-                    disabled={isCreatingOrder || isFetchingRates || pincode.length !== 6}
-                    className="btn-gold"
-                    style={{
-                      width: '100%',
-                      padding: '14px 0',
-                      fontSize: '0.85rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '10px',
-                      opacity: (isCreatingOrder || isFetchingRates || pincode.length !== 6) ? 0.6 : 1,
-                      cursor: (isCreatingOrder || isFetchingRates || pincode.length !== 6) ? 'not-allowed' : 'pointer'
-                    }}
-                  >
-                    {isCreatingOrder ? 'Processing...' : <><CheckCircle size={16} /> Place Order Securely</>}
-                  </button>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <p style={{
+                      fontSize: '0.65rem',
+                      color: 'var(--color-text-muted)',
+                      lineHeight: 1.4,
+                      textAlign: 'center',
+                      opacity: 0.8
+                    }}>
+                      By placing this order, you agree to our <strong>Strict No Refund & No Replacement Policy</strong>. You are guaranteed to receive the exact product shown. Replacements or refunds are only issued in the rare event that an incorrect item is delivered.
+                    </p>
+                    <button
+                      onClick={handlePlaceOrder}
+                      disabled={isCreatingOrder || isFetchingRates || pincode.length !== 6}
+                      className="btn-gold"
+                      style={{
+                        width: '100%',
+                        padding: '14px 0',
+                        fontSize: '0.85rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '10px',
+                        opacity: (isCreatingOrder || isFetchingRates || pincode.length !== 6) ? 0.6 : 1,
+                        cursor: (isCreatingOrder || isFetchingRates || pincode.length !== 6) ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      {isCreatingOrder ? 'Processing...' : <><CheckCircle size={16} /> Place Order Securely</>}
+                    </button>
+                  </div>
                 )}
               </div>
             )}

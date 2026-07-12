@@ -243,7 +243,7 @@ export default function App() {
   return (
     <div className="app-container">
       {/* Premium Glassmorphic Header Navbar */}
-      <header className="glass-panel" style={{
+      <header className="glass-panel app-header" style={{
         position: 'sticky',
         top: 0,
         zIndex: 50,
@@ -286,7 +286,7 @@ export default function App() {
         </a>
 
         {/* Navigation Action Links */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+        <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
           {isAdminView ? (
             <a 
               href="#/" 
