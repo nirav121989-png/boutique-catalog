@@ -111,6 +111,7 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
   const [filterCategory, setFilterCategory] = useState('');
   const [filterPrice, setFilterPrice] = useState('asc'); // 'asc', 'desc'
   const [filterImage, setFilterImage] = useState('all'); // 'all', 'with', 'without'
+  const [quickUploadProductId, setQuickUploadProductId] = useState(null);
 
   // Boutique Settings Form States
   const [setWhatsapp, setSetWhatsapp] = useState(settings?.whatsapp_number || '');
@@ -238,6 +239,23 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
       console.error(e);
       alert("Error creating copies.");
     }
+  };
+
+  const handleQuickUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file || !quickUploadProductId) return;
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const compressed = await compressImage(reader.result, 800, 800, 0.7);
+      const productToUpdate = products.find(p => p.id === quickUploadProductId);
+      if (productToUpdate) {
+        const payload = { ...productToUpdate, image_url: compressed, images: [compressed] };
+        await db.saveItem(payload);
+      }
+      setQuickUploadProductId(null);
+      e.target.value = null;
+    };
+    reader.readAsDataURL(file);
   };
 
   // Save product (Add or Edit)
@@ -759,6 +777,13 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
       {activeTab === 'inventory' && (
         <>
 
+          <input 
+            id="quickImageUpload"
+            type="file" 
+            accept="image/*" 
+            style={{ display: 'none' }} 
+            onChange={handleQuickUpload} 
+          />
 
           {/* Products Management Grid */}
           <div className="glass-panel" style={{ overflow: 'hidden' }}>
@@ -938,6 +963,24 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
                         {/* Row CRUD Actions */}
                         <td style={{ padding: '16px 24px', textAlign: 'right' }}>
                           <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                            <button
+                              onClick={() => {
+                                setQuickUploadProductId(product.id);
+                                document.getElementById('quickImageUpload').click();
+                              }}
+                              title="Quick Upload Image"
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                cursor: 'pointer',
+                                color: 'var(--color-text-muted)',
+                                transition: 'var(--transition-fast)'
+                              }}
+                              onMouseEnter={(e) => e.target.style.color = 'var(--color-gold-metallic)'}
+                              onMouseLeave={(e) => e.target.style.color = 'var(--color-text-muted)'}
+                            >
+                              <Upload size={16} />
+                            </button>
                             <button
                               onClick={() => handleOpenEdit(product)}
                               style={{
