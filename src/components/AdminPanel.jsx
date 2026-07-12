@@ -193,30 +193,45 @@ export default function AdminPanel({ products, settings, onUpdateProducts, onUpd
     setIsFormOpen(true);
   };
 
-  // Open modal for Copying an existing product
-  const handleOpenCopy = (product) => {
-    setEditingItem(null); // It's a new item!
-    setFormTitle(product.title + " (Copy)");
-    setFormSku('REF-' + Math.floor(100 + Math.random() * 900)); // Generate new SKU
-    setFormCategory(product.category || '');
-    setFormSubcategory(product.subcategory || '');
-    setFormCollectionLine(product.collection_line || 'Daily Wear');
-    setFormPurity(product.purity || 'Premium Imitation');
-    setFormPrice(product.price || '');
-    setFormOfferType(product.offer_type || 'none');
-    setFormOfferTag(product.offer_tag || '');
-    setFormComparePrice(product.compare_at_price || '');
-    // Clear images for the copy
-    setFormImages([]);
-    setFormImageUrlInput('');
-    setFormDescription(product.description || '');
-    setFormAvailable(product.is_available !== false);
-    setFormIsLatest(false); // Reset flags for the copy
-    setFormIsExclusive(false);
-    setFormStockQty(product.stock_qty !== undefined ? product.stock_qty : 1);
-    setFormWeightGrams(product.weight_grams || 100);
-    setFormDimensions(product.dimensions || { l: '20', w: '15', h: '5' });
-    setIsFormOpen(true);
+  const handleOpenCopy = async (product) => {
+    const qtyStr = window.prompt(`How many copies of "${product.title}" do you want to create?`, "1");
+    if (!qtyStr) return; // User cancelled
+    const qty = parseInt(qtyStr, 10);
+    if (isNaN(qty) || qty <= 0) {
+      alert("Please enter a valid quantity.");
+      return;
+    }
+    
+    try {
+      for (let i = 0; i < qty; i++) {
+        const payload = {
+          title: product.title,
+          sku: 'REF-' + Math.floor(1000 + Math.random() * 9000), // Generate new SKU
+          category: product.category || '',
+          subcategory: product.subcategory || '',
+          collection_line: product.collection_line || 'Daily Wear',
+          purity: product.purity || 'Premium Imitation',
+          price: product.price || 0,
+          offer_type: product.offer_type || 'none',
+          offer_tag: product.offer_tag || '',
+          compare_at_price: product.compare_at_price || null,
+          image_url: '', 
+          images: [],      
+          description: product.description || '',
+          is_available: product.is_available !== false,
+          is_latest: product.is_latest === true,
+          is_exclusive: product.is_exclusive === true,
+          stock_qty: product.stock_qty || 1,
+          weight_grams: product.weight_grams || 100,
+          dimensions: product.dimensions || { l: 20, w: 15, h: 5 }
+        };
+        await db.saveItem(payload);
+      }
+      alert(`Successfully created ${qty} copies!`);
+    } catch (e) {
+      console.error(e);
+      alert("Error creating copies.");
+    }
   };
 
   // Save product (Add or Edit)
