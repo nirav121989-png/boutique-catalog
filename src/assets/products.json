@@ -1,0 +1,74 @@
+[
+  {
+    "id": "1",
+    "title": "Heritage Antique Choker Set",
+    "sku": "REF-N501",
+    "category": "Necklaces",
+    "description": "A gorgeous antique imitation choker set adorned with ruby-red stones and pearl drops, perfect for bridal and festive ensembles.",
+    "price": 2450,
+    "compare_at_price": 3200,
+    "purity": "Premium Imitation",
+    "image_url": "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&auto=format&fit=crop&q=80",
+    "is_available": true
+  },
+  {
+    "id": "2",
+    "title": "Kundan Solitaire Statement Ring",
+    "sku": "REF-R101",
+    "category": "Rings",
+    "description": "A majestic Kundan statement ring featuring a central uncut glass stone bordered by intricate green meenakari work.",
+    "price": 850,
+    "compare_at_price": 1200,
+    "purity": "Premium Imitation",
+    "image_url": "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&auto=format&fit=crop&q=80",
+    "is_available": true
+  },
+  {
+    "id": "3",
+    "title": "1-Gram Gold Plated Bangle Set",
+    "sku": "REF-B301",
+    "category": "Bracelets",
+    "description": "A classic set of four bangles coated with high-quality 1-gram gold plating, mimicking the exact shine and texture of solid gold.",
+    "price": 1800,
+    "compare_at_price": 2400,
+    "purity": "1g Gold Plated",
+    "image_url": "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=800&auto=format&fit=crop&q=80",
+    "is_available": true
+  },
+  {
+    "id": "4",
+    "title": "Jhumka Peacock Earrings",
+    "sku": "REF-E201",
+    "category": "Earrings",
+    "description": "Dazzling traditional imitation Jhumkas with intricate peacock carvings, detailed with tiny golden beads and kemp stones.",
+    "price": 1250,
+    "compare_at_price": 1250,
+    "purity": "Premium Imitation",
+    "image_url": "https://images.unsplash.com/photo-1635767798638-3e25273a8236?w=800&auto=format&fit=crop&q=80",
+    "is_available": true
+  },
+  {
+    "id": "5",
+    "title": "2-Gram Gold Plated Haram Set",
+    "sku": "REF-N502",
+    "category": "Necklaces",
+    "description": "A majestic long-chain haram necklace set with premium 2-gram gold plating, detailed with stone-studded traditional floral motifs.",
+    "price": 4500,
+    "compare_at_price": 5500,
+    "purity": "2g Gold Plated",
+    "image_url": "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=800&auto=format&fit=crop&q=80",
+    "is_available": true
+  },
+  {
+    "id": "6",
+    "title": "American Diamond Kada",
+    "sku": "REF-B302",
+    "category": "Bracelets",
+    "description": "A premium openable Kada bracelet studded with high-grade micro-pave American Diamonds (CZ) on gold-plated backing.",
+    "price": 1650,
+    "compare_at_price": 2200,
+    "purity": "Premium Imitation",
+    "image_url": "https://images.unsplash.com/photo-1603561591411-07134e71a2a9?w=800&auto=format&fit=crop&q=80",
+    "is_available": true
+  }
+]

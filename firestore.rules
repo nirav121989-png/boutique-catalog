@@ -1,0 +1,18 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Anyone can read products to view the catalog
+    // Only authenticated admins can write (create/update/delete)
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    // Anyone can read settings for the boutique details
+    // Only authenticated admins can write
+    match /settings/{settingsId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}
